@@ -5,9 +5,9 @@ import TemplateMethod_practice.LogReader;
 public abstract class BaseLogReaderCreator {
 
 
-    protected  LogReader createLogReader(Object data) {
+    protected  LogReader createLogReader(LogType logType, Object data) {
 
-        LogReader logReader = createLogReaderInstance();
+        LogReader logReader = createLogReaderInstance(logType);
 
         logReader.setDataSourse(data);
         logReader.setCurrentPosition(4);
@@ -15,6 +15,6 @@ public abstract class BaseLogReaderCreator {
         return  logReader;
     }
 
-    protected abstract LogReader createLogReaderInstance();
+    protected abstract LogReader createLogReaderInstance(LogType logType);
 
 }

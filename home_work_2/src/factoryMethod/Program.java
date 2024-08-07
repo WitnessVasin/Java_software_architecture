@@ -17,7 +17,7 @@ public class Program {
     public static void main(String[] args) {
 
         LogReader logReader = new ConcreteReaderCreator()
-                .createLogReader(data);
+                .createLogReader(LogType.Poem, data);
         for (LogEntry log : logReader.readLogEntry()){
             System.out.println(log.getText());
         }
