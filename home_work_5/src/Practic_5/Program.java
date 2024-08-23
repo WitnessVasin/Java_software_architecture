@@ -1,11 +1,10 @@
 package Practic_5;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class Program {
+
+    static Scanner scanner = new Scanner(System.in);
 
     /**
      * Необходимо разделить на горизонтальные уровни "Редактор 3D графики".
@@ -24,8 +23,255 @@ public class Program {
      */
     public static void main(String[] args) {
 
+        Editor3D editor3D = new Editor3D();
+        boolean f = true;
+        while (f) {
+            System.out.println("*** MOй 3D PEДAKTOP ***");
+            System.out.println("==================");
+            System.out.println("1. Oткрыть проект");
+            System.out.println("2. Cоxранить проект");
+            System.out.println("3. OтOбразить параметры проекта");
+            System.out.println("4. Oтобразить все модели проекта");
+            System.out.println("5. Отобразить все текстуры проекта");
+            System.out.println("6. Выполнить рендер всех моделей");
+            System.out.println("7. Выполнить рендер модели");
+            System.out.println("0. ЗАВЕРШЕНИЕ РАБОТЫ ПРИЛОЖЕНИЯ");
+            System.out.print("Пожалуйста, выберите пункт меню: ");
+
+            if(scanner.hasNextInt()) {
+                int no = scanner.nextInt();
+                scanner.nextLine();
+                try {
+                    switch(no) {
+                        case 0:
+                            System.out.println("Завершение работы приложения");
+                            f = false;
+                            break;
+                        case 1:
+                            System.out.println("Укажите наименование файла проекта: ");
+                            String fileName = scanner.nextLine();
+                            editor3D.openProject(fileName);
+                            System.out.println("Проект открыт");
+                            break;
+                        case 3:
+                            editor3D.showProjectSettings();
+                            break;
+                        case 4:
+                            editor3D.printAllModels();
+                            break;
+                        case 5:
+                            editor3D.printAllTextures();
+                            break;
+                        case 6:
+                            editor3D.renderAll();
+                            break;
+                        case 7:
+                            System.out.println("Укажите номер модели: ");
+                            if (scanner.hasNextInt()) {
+                                int modelNo = scanner.nextInt();
+                                scanner.nextLine();
+                                editor3D.renderModel(modelNo);
+                            }
+                            else {
+                                System.out.println("Неккоретный номер модели");
+                            }
+                            break;
+
+                        default:
+                            System.out.println("Укажите корректный пункт меню");
+                    }
+                }
+                catch (Exception e){
+                    System.out.println(e.getMessage());
+                }
+            }
+            else {
+                System.out.println("Укажите корректный пунтк меню");
+                scanner.nextLine();
+            }
+        }
     }
 }
+
+class Editor3D implements UILayer{
+
+    private  ProjectFile projectFile;
+
+    private  BusinessLogicalLayer businessLogicalLayer;
+
+    private DatabaseAccess databaseAccess;
+
+    private DataBase dataBase;
+
+    private void initialize(){
+        dataBase = new EditorDatabase(projectFile);
+        databaseAccess = new EditorDatabaseAccess(dataBase);
+        businessLogicalLayer = new EditorBusinessLogicalLayer(databaseAccess);
+    }
+
+    @Override
+    public void openProject(String fileName) {
+        this.projectFile = new ProjectFile(fileName);
+        initialize();
+    }
+
+    @Override
+    public void showProjectSettings() {
+
+        checkProjectFile();
+
+        System.out.println("*** Project v1 ***");
+        System.out.println("******************");
+        System.out.printf("fileName: %s\n", projectFile.getFileName());
+        System.out.printf("setting1: %d\n", projectFile.getSetting());
+        System.out.printf("setting2: %s\n", projectFile.getSetting2());
+        System.out.printf("setting3: %s\n", projectFile.getSetting3());
+        System.out.println("******* **********");
+
+    }
+
+    private void checkProjectFile(){
+        if (projectFile == null){
+            throw new RuntimeException("No project file selected");
+        }
+    }
+
+    @Override
+    public void saveProject() {
+        checkProjectFile();
+        dataBase.save();
+        System.out.println("Saving project");
+
+    }
+
+    @Override
+    public void printAllModels() {
+
+        checkProjectFile();
+
+        ArrayList<Model3D> models = (ArrayList<Model3D>) businessLogicalLayer.getAllModels();
+        for (int i = 0; i < models.size(); i++){
+            System.out.printf("===%d===\n",1);
+            System.out.println(models.get(i));
+            for (Texture texture: models.get(i).getTextures()){
+                System.out.printf("Texture: %s\n", texture);
+            }
+        }
+
+    }
+
+    @Override
+    public void printAllTextures() {
+
+        checkProjectFile();
+
+        ArrayList<Texture> textures = (ArrayList<Texture>) businessLogicalLayer.getAllTexture();
+        for (int i = 0; i < textures.size(); i++){
+            System.out.printf("===%d===\n",1);
+            System.out.println(textures.get(i));
+        }
+    }
+
+    @Override
+    public void renderAll() {
+
+        checkProjectFile();
+
+
+        System.out.println("Подождите ...");
+        long startTime = System.currentTimeMillis();
+        businessLogicalLayer.renderAllModels();
+        long endTime = (System.currentTimeMillis() -  startTime);
+        System.out.printf("Oперачия выполнена за % мc.\n", endTime);
+    }
+
+    @Override
+    public void renderModel(int i) {
+
+        checkProjectFile();
+
+        ArrayList<Model3D> models = (ArrayList<Model3D>)businessLogicalLayer.getAllModels();
+        if (i < 0 || i > models.size() - 1)
+            throw new RuntimeException("Номер модели указан некорректною.");
+        System.out.println("Подождите ...");
+        long startTime = System.currentTimeMillis();
+        businessLogicalLayer.renderModel(models.get(i));
+        long endTime = (System.currentTimeMillis() - startTime);
+        System.out.printf("Oперачия выполнена за %d Mc.\n", endTime);
+    }
+}
+
+/**
+ * Интерфейс UI
+ */
+
+interface UILayer{
+
+    void openProject (String fileName);
+
+    void showProjectSettings();
+
+    void saveProject();
+
+    void printAllModels();
+
+    void printAllTextures();
+
+    void renderAll();
+
+    void renderModel(int i);
+}
+
+/**
+ * Реализация BLL
+ */
+class EditorBusinessLogicalLayer implements BusinessLogicalLayer{
+
+    private DatabaseAccess databaseAccess;
+
+    public EditorBusinessLogicalLayer(DatabaseAccess databaseAccess) {
+        this.databaseAccess = databaseAccess;
+    }
+
+    @Override
+    public Collection<Model3D> getAllModels() {
+        return databaseAccess.getAllModels();
+    }
+
+    @Override
+    public Collection<Texture> getAllTexture() {
+        return databaseAccess.getALLTextures();
+    }
+
+    @Override
+    public void renderModel(Model3D model) {
+
+    }
+
+    @Override
+    public void renderAllModels() {
+        for (Model3D model : getAllModels()) {
+            processRender(model);
+        }
+    }
+
+    private Random rand = new Random();
+
+    private void processRender(Model3D model) {
+        try
+        {
+            Thread.sleep(2500 - rand.nextInt(2800));
+        }
+        catch(InterruptedException e){
+            e.printStackTrace();
+        }
+
+    }
+}
+
+/**
+ * Интерфейс BLL
+ */
 
 interface BusinessLogicalLayer{
 
@@ -275,7 +521,7 @@ class ProjectFile{
         return setting2;
     }
 
-    public boolean isSetting3() {
+    public boolean getSetting3() {
         return setting3;
     }
 }
