@@ -373,10 +373,6 @@ class EditorDatabase implements DataBase{
 
     @Override
     public Collection<Entity> getAll() {
-        return null;
-    }
-
-    public Collection<Entity> getALL(){
         if (entities == null) {
             entities = new ArrayList<>();
             int entCount = random.nextInt(5, 11);
